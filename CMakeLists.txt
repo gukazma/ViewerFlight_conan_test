@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.18)
 
 # 设置基础环境
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # 设置默认的编译配置为 Debug，conan.cmake 需要确定你当前正在使用哪种编译配置以决定如何下载和编译三方库
 if (NOT CMAKE_BUILD_TYPE)
@@ -12,7 +9,7 @@ if (NOT CMAKE_BUILD_TYPE)
     message(STATUS "No CMAKE_BUILD_TYPE selected, defaulting to ${CMAKE_BUILD_TYPE}")
 endif ()
 
-project(CppTemplateProject VERSION 0.1 LANGUAGES CXX)
+project(MergeRootNode VERSION 0.1 LANGUAGES CXX)
 
 include(CMakeModules/conan.cmake)
 if (CONAN_PROFILE_BUILD AND CONAN_PROFILE_HOST)
@@ -24,11 +21,7 @@ conan_cmake_install(PATH_OR_REFERENCE .. BUILD missing
                     # ENV_HOST CONAN_CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
 else ()
     conan_cmake_autodetect(settings)
-    if(CONAN_REMOTE)
-      conan_cmake_install(PATH_OR_REFERENCE .. BUILD missing SETTINGS ${settings} REMOTE ${CONAN_REMOTE})
-    else()
-      conan_cmake_install(PATH_OR_REFERENCE .. BUILD missing SETTINGS ${settings})
-    endif()
+    conan_cmake_install(PATH_OR_REFERENCE .. BUILD missing SETTINGS ${settings})
 endif ()
 
 # 在 conan_cmake_install 执行后，会在 CMAKE_BINARY_DIR 目录下生成 cmake 的配置信息和 Qt 的依赖库路径信息，我们将其引入到 CMake 工程中，并调用 conan_basic_setup 来自动配置各个环境变量信息。
