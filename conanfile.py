@@ -12,7 +12,8 @@ class ModuleConan(ConanFile):
         "qt:qttools": True,
         "openscenegraph:shared": True,
         "osgearth:shared": True,
-        "boost:shared": True
+        "boost:shared": True,
+        "openscenegraph:opengl_profile": "gl3",
     }
 
     def configure(self):

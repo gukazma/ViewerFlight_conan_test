@@ -13,6 +13,7 @@ set(CMAKE_AUTORCC ON)
 
 
 find_package(OpenSceneGraph 2.0.0 REQUIRED osg osgViewer osgDB osgUtil osgGA)
+find_package(osgearth)
 
 # 扫描当前源代码文件列表
 
@@ -32,12 +33,14 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${CPP_HEAD_FILES} ${CPP_SO
 add_executable(${TARGET_NAME} ${CPP_HEAD_FILES} ${CPP_SOUCE_FILES} ${UI_SOUCE_FILES} ${MOC_SOURCES} ${OSGQT_HEAD})
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER Apps)
 # 链接 Conan 指向的 Qt 库文件
+message("${OSGEARTH_LIBRARIES} ****************************8")
 target_link_libraries(${TARGET_NAME} PRIVATE
 Qt5::Core
 Qt5::Gui
 Qt5::Widgets
 Qt5::OpenGL
 ${OPENSCENEGRAPH_LIBRARIES}
+CONAN_PKG::osgearth
 )
 target_include_directories(${TARGET_NAME} PRIVATE
 ${CMAKE_CURRENT_LIST_DIR}/Vendors/osgQt
