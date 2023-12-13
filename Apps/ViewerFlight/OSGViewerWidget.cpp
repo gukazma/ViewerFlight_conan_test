@@ -18,6 +18,7 @@
 #include <osg/BlendFunc>
 #include <osgGA/MultiTouchTrackballManipulator>
 OSGViewerWidget::OSGViewerWidget(QWidget* parent) {
+    setMouseTracking(true);
     connect(this, &osgQOpenGLWidget::initialized, this, &OSGViewerWidget::init);
 }
 
@@ -25,35 +26,39 @@ OSGViewerWidget::~OSGViewerWidget() {}
 
 void OSGViewerWidget::init()
 {
-    m_root                   = new osg::Group;
-    auto            stateSet = m_root->getOrCreateStateSet();
-    osg::BlendFunc* blend    = new osg::BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    stateSet->setAttributeAndModes(blend, osg::StateAttribute::ON);
+    auto m_mainpulator = new osgEarth::Util::EarthManipulator;
+    getOsgViewer()->setCameraManipulator(m_mainpulator);
+    
 
-    osg::ref_ptr<osgEarth::Map> map = new osgEarth::Map();
-    osg::ref_ptr<osgEarth::MapNode> mapNode = new osgEarth::MapNode(map);
-    m_root->addChild(mapNode);
+    // load an earth file, and support all or our example command-line options
+    auto node       = osgDB::readRefNodeFile("D:/softwares/ViewerFlight/Resources/earthfile/china-simple.earth");
+    m_root     = new osg::Group();
+    auto mapNode    = osgEarth::MapNode::findMapNode(node);
+    auto map        = mapNode->getMap();
 
-    m_cameraManipulator      = new osgGA::MultiTouchTrackballManipulator();
-    auto standardManipulator = (osgGA::StandardManipulator*)m_cameraManipulator.get();
-    standardManipulator->setAllowThrow(false);
-    getOsgViewer()->setCameraManipulator(m_cameraManipulator);
+    osgEarth::SkyOptions skyOptions;   // 天空环境选项
+    skyOptions.ambient() = 1;          // 环境光照水平(0~1)
+    auto skyNode =
+        osgEarth::SkyNode::create(skyOptions);   // 创建用于提供天空、照明和其他环境效果的类
+    skyNode->setDateTime(
+        osgEarth::DateTime(2021, 4, 15, 12 - 8));   // 配置环境的日期/时间。(格林尼治，时差8小时)
+    skyNode->setEphemeris(new osgEarth::Util::Ephemeris);   // 用于根据日期/时间定位太阳和月亮的星历
+    skyNode->setLighting(true);                             // 天空是否照亮了它的子图
+    skyNode->addChild(mapNode);                             // 添加地图节点
+    skyNode->attach(getOsgViewer());   // 将此天空节点附着到视图（放置天光）
+    m_root->addChild(skyNode);
+    m_root->addChild(node);
     getOsgViewer()->setSceneData(m_root);
 
-    osg::Camera* camera = getOsgViewer()->getCamera();
-    camera->setClearColor(
-        osg::Vec4(0.9529411764705882, 0.9529411764705882, 0.9529411764705882, 1.0));
+    // initialize a viewer:
+    auto viewer = getOsgViewer();
+    viewer->getCamera()->addCullCallback(new osgEarth::Util::AutoClipPlaneCullCallback(mapNode));
 
-
-    //// initialize a viewer:
-    //auto viewer = getOsgViewer();
-    //viewer->getCamera()->addCullCallback(new osgEarth::Util::AutoClipPlaneCullCallback(mapNode));
-
-    //osgEarth::Util::Controls::LabelControl* PositionLabel =
-    //    new osgEarth::Util::Controls::LabelControl("", osg::Vec4(1.0, 1.0, 1.0, 1.0));
-
-    //m_root->addChild(osgEarth::Util::Controls::ControlCanvas::get(viewer));
-    //osgEarth::Util::Controls::ControlCanvas* canvas =
-    //    osgEarth::Util::Controls::ControlCanvas::get(viewer);
-    //canvas->addControl(PositionLabel);
+    osgEarth::Util::Controls::LabelControl* PositionLabel =
+        new osgEarth::Util::Controls::LabelControl("", osg::Vec4(1.0, 1.0, 1.0, 1.0));
+    
+    m_root->addChild(osgEarth::Util::Controls::ControlCanvas::get(viewer));
+    osgEarth::Util::Controls::ControlCanvas* canvas =
+        osgEarth::Util::Controls::ControlCanvas::get(viewer);
+    canvas->addControl(PositionLabel);
 }
